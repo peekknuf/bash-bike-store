@@ -1,0 +1,22 @@
+INSERT INTO bikes (type, size) VALUES
+  ('Mountain', 28),
+  ('Road', 23),
+  ('Hybrid', 26),
+  ('Cruiser', 24),
+  ('BMX', 20),
+  ('Mountain', 30),
+  ('Road', 25),
+  ('Hybrid', 26),
+  ('Cruiser', 24),
+  ('BMX', 20),
+  ('Mountain', 28),
+  ('Road', 23),
+  ('Hybrid', 26),
+  ('Cruiser', 24),
+  ('BMX', 20),
+  ('Mountain', 30),
+  ('Road', 25),
+  ('Hybrid', 26),
+  ('Cruiser', 24),
+  ('BMX', 20);
+select * from bikes;
