@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PSQL="psql -X --username=freecodecamp --dbname=bikes --tuples-only -c"
+mysql_command="mysql -h localhost -u root -proot bikes"
 
 echo -e "\n~~~~~ Bike Rental Shop ~~~~~\n"
 
@@ -24,7 +24,7 @@ MAIN_MENU() {
 
 RENT_MENU() {
   # get available bikes
-  AVAILABLE_BIKES=$($PSQL "SELECT bike_id, type, size FROM bikes WHERE available = true ORDER BY bike_id")
+  AVAILABLE_BIKES=$($mysql_command -e "SELECT bike_id, type, size FROM bikes WHERE available = 1 ORDER BY bike_id")
 
   # if no bikes available
   if [[ -z $AVAILABLE_BIKES ]]
@@ -50,7 +50,7 @@ RENT_MENU() {
       MAIN_MENU "That is not a valid bike number."
     else
       # get bike availability
-      BIKE_AVAILABILITY=$($PSQL "SELECT available FROM bikes WHERE bike_id = $BIKE_ID_TO_RENT AND available = true")
+      BIKE_AVAILABILITY=$($mysql_command -e "SELECT available FROM bikes WHERE bike_id = $BIKE_ID_TO_RENT AND available = 1")
 
       # if not available
       if [[ -z $BIKE_AVAILABILITY ]]
@@ -62,7 +62,7 @@ RENT_MENU() {
         echo -e "\nWhat's your phone number?"
         read PHONE_NUMBER
 
-        CUSTOMER_NAME=$($PSQL "SELECT name FROM customers WHERE phone = '$PHONE_NUMBER'")
+        CUSTOMER_NAME=$($mysql_command -e "SELECT name FROM customers WHERE phone = '$PHONE_NUMBER'")
 
         # if customer doesn't exist
         if [[ -z $CUSTOMER_NAME ]]
@@ -72,20 +72,20 @@ RENT_MENU() {
           read CUSTOMER_NAME
 
           # insert new customer
-          INSERT_CUSTOMER_RESULT=$($PSQL "INSERT INTO customers(name, phone) VALUES('$CUSTOMER_NAME', '$PHONE_NUMBER')") 
+          INSERT_CUSTOMER_RESULT=$($mysql_command -e "INSERT INTO customers(name, phone) VALUES('$CUSTOMER_NAME', '$PHONE_NUMBER')") 
         fi
 
         # get customer_id
-        CUSTOMER_ID=$($PSQL "SELECT customer_id FROM customers WHERE phone='$PHONE_NUMBER'")
+        CUSTOMER_ID=$($mysql_command -e "SELECT customer_id FROM customers WHERE phone='$PHONE_NUMBER'")
 
         # insert bike rental
-        INSERT_RENTAL_RESULT=$($PSQL "INSERT INTO rentals(customer_id, bike_id) VALUES($CUSTOMER_ID, $BIKE_ID_TO_RENT)")
+        INSERT_RENTAL_RESULT=$($mysql_command -e "INSERT INTO rentals(customer_id, bike_id) VALUES($CUSTOMER_ID, $BIKE_ID_TO_RENT)")
 
         # set bike availability to false
-        SET_TO_FALSE_RESULT=$($PSQL "UPDATE bikes SET available = false WHERE bike_id = $BIKE_ID_TO_RENT")
+        SET_TO_FALSE_RESULT=$($mysql_command -e "UPDATE bikes SET available = false WHERE bike_id = $BIKE_ID_TO_RENT")
 
         # get bike info
-        BIKE_INFO=$($PSQL "SELECT size, type FROM bikes WHERE bike_id = $BIKE_ID_TO_RENT")
+        BIKE_INFO=$($mysql_command -e "SELECT size, type FROM bikes WHERE bike_id = $BIKE_ID_TO_RENT")
         BIKE_INFO_FORMATTED=$(echo $BIKE_INFO | sed 's/ |/"/')
         
         # send to main menu
@@ -100,7 +100,7 @@ RETURN_MENU() {
   echo -e "\nWhat's your phone number?"
   read PHONE_NUMBER
 
-  CUSTOMER_ID=$($PSQL "SELECT customer_id FROM customers WHERE phone = '$PHONE_NUMBER'")
+  CUSTOMER_ID=$($mysql_command -e "SELECT customer_id FROM customers WHERE phone = '$PHONE_NUMBER'")
 
   # if not found
   if [[ -z $CUSTOMER_ID  ]]
@@ -109,7 +109,7 @@ RETURN_MENU() {
     MAIN_MENU "I could not find a record for that phone number."
   else
     # get customer's rentals
-    CUSTOMER_RENTALS=$($PSQL "SELECT bike_id, type, size FROM bikes INNER JOIN rentals USING(bike_id) INNER JOIN customers USING(customer_id) WHERE phone = '$PHONE_NUMBER' AND date_returned IS NULL ORDER BY bike_id")
+    CUSTOMER_RENTALS=$($mysql_command -e "SELECT bike_id, type, size FROM bikes INNER JOIN rentals USING(bike_id) INNER JOIN customers USING(customer_id) WHERE phone = '$PHONE_NUMBER' AND date_returned IS NULL ORDER BY bike_id")
 
     # if no rentals
     if [[ -z $CUSTOMER_RENTALS  ]]
@@ -133,7 +133,7 @@ RETURN_MENU() {
         MAIN_MENU "That is not a valid bike number."
         else
         # check if input is rented
-        RENTAL_ID=$($PSQL "SELECT rental_id FROM rentals INNER JOIN customers USING(customer_id) WHERE phone = '$PHONE_NUMBER' AND bike_id = $BIKE_ID_TO_RETURN AND date_returned IS NULL")
+        RENTAL_ID=$($mysql_command -e "SELECT rental_id FROM rentals INNER JOIN customers USING(customer_id) WHERE phone = '$PHONE_NUMBER' AND bike_id = $BIKE_ID_TO_RETURN AND date_returned IS NULL")
         # if input not rented
         if [[ -z $RENTAL_ID ]]
         then
@@ -141,9 +141,9 @@ RETURN_MENU() {
         MAIN_MENU "You do not have that bike rented."
         else
           # update date_returned
-          RETURN_BIKE_RESULT=$($PSQL "UPDATE rentals SET date_returned = NOW() WHERE rental_id = $RENTAL_ID")
+          RETURN_BIKE_RESULT=$($mysql_command -e "UPDATE rentals SET date_returned = NOW() WHERE rental_id = $RENTAL_ID")
           # set bike availability to true
-          SET_TO_TRUE_RESULT=$($PSQL "UPDATE bikes SET available = true WHERE bike_id = $BIKE_ID_TO_RETURN")
+          SET_TO_TRUE_RESULT=$($mysql_command -e "UPDATE bikes SET available = true WHERE bike_id = $BIKE_ID_TO_RETURN")
           # send to main menu
           MAIN_MENU "Thank you for returning your bike."
         fi
