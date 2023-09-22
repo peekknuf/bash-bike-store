@@ -24,7 +24,7 @@ MAIN_MENU() {
 
 RENT_MENU() {
   # get available bikes
-  AVAILABLE_BIKES=$($mysql_command -e "SELECT bike_id, type, size FROM bikes WHERE available = 1 ORDER BY bike_id")
+  AVAILABLE_BIKES=$($mysql_command -e "SELECT bike_id, size, type FROM bikes WHERE available = 1")
 
   # if no bikes available
   if [[ -z $AVAILABLE_BIKES ]]
@@ -32,11 +32,11 @@ RENT_MENU() {
     # send to main menu
     MAIN_MENU "Sorry, we don't have any bikes available right now."
   else
-    # display available bikes
+    # Display available bikes
     echo -e "\nHere are the bikes we have available:"
-    echo "$AVAILABLE_BIKES" | while read BIKE_ID BAR TYPE BAR SIZE
+    echo "$AVAILABLE_BIKES" | sed '1,2d' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/)\s*/) /' |  while read BIKE_ID TYPE SIZE
     do
-      echo "$BIKE_ID) $SIZE\" $TYPE Bike"
+      echo "$BIKE_ID) $TYPE\" $SIZE"
     done
 
     # ask for bike to rent
@@ -109,7 +109,12 @@ RETURN_MENU() {
     MAIN_MENU "I could not find a record for that phone number."
   else
     # get customer's rentals
-    CUSTOMER_RENTALS=$($mysql_command -e "SELECT bike_id, type, size FROM bikes INNER JOIN rentals USING(bike_id) INNER JOIN customers USING(customer_id) WHERE phone = '$PHONE_NUMBER' AND date_returned IS NULL ORDER BY bike_id")
+    CUSTOMER_RENTALS=$($mysql_command -e "SELECT bikes.bike_id, bikes.type, bikes.size
+                                            FROM bikes
+                                            INNER JOIN rentals ON bikes.bike_id = rentals.bike_id
+                                            INNER JOIN customers ON rentals.customer_id = customers.customer_id
+                                            WHERE customers.phone = '$PHONE_NUMBER' AND rentals.date_returned IS NULL
+                                            ORDER BY bikes.bike_id")
 
     # if no rentals
     if [[ -z $CUSTOMER_RENTALS  ]]
@@ -133,7 +138,11 @@ RETURN_MENU() {
         MAIN_MENU "That is not a valid bike number."
         else
         # check if input is rented
-        RENTAL_ID=$($mysql_command -e "SELECT rental_id FROM rentals INNER JOIN customers USING(customer_id) WHERE phone = '$PHONE_NUMBER' AND bike_id = $BIKE_ID_TO_RETURN AND date_returned IS NULL")
+        RENTAL_ID=$($mysql_command -e "SELECT rentals.rental_id
+                                        FROM rentals
+                                        INNER JOIN customers ON rentals.customer_id = customers.customer_id
+                                        WHERE customers.phone = '$PHONE_NUMBER' AND rentals.bike_id = $BIKE_ID_TO_RETURN AND rentals.date_returned IS NULL")
+
         # if input not rented
         if [[ -z $RENTAL_ID ]]
         then
