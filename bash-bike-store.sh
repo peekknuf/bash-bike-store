@@ -85,11 +85,11 @@ RENT_MENU() {
         SET_TO_FALSE_RESULT=$($mysql_command -e "UPDATE bikes SET available = false WHERE bike_id = $BIKE_ID_TO_RENT")
 
         # get bike info
-        BIKE_INFO=$($mysql_command -e "SELECT size, type FROM bikes WHERE bike_id = $BIKE_ID_TO_RENT")
-        BIKE_INFO_FORMATTED=$(echo $BIKE_INFO | sed 's/ |/"/')
+        BIKE_INFO=$($mysql_command -e "SELECT CONCAT_WS(' ', size, type) FROM bikes WHERE bike_id = $BIKE_ID_TO_RENT")
+        FORMATTED_INFO=$(echo "$BIKE_INFO" | tail -n 1)
         
         # send to main menu
-        MAIN_MENU "I have put you down for the $BIKE_INFO_FORMATTED Bike, $(echo $CUSTOMER_NAME | sed -r 's/^ *| *$//g')."
+        MAIN_MENU "I have put you down for the $FORMATTED_INFO Bike, $CUSTOMER_NAME"
       fi
     fi
   fi
@@ -124,9 +124,9 @@ RETURN_MENU() {
     else
       # display rented bikes
       echo -e "\nHere are your rentals:"
-      echo "$CUSTOMER_RENTALS" | while read BIKE_ID BAR TYPE BAR SIZE
+      echo "$CUSTOMER_RENTALS"  | awk 'NR > 1 { print }' |   while read BIKE_ID SIZE TYPE
       do
-        echo "$BIKE_ID) $SIZE\" $TYPE Bike"
+        echo "$BIKE_ID) $SIZE $TYPE\" Bike"
       done
       # ask for bike to return
       echo -e "\nWhich one would you like to return?"
