@@ -1,16 +1,16 @@
---checking stuff
+# checking stuff
 use bikes;
 select * from bikes;
 select * from customers;
 select * from rentals;
 
---refreshing stuff
+# refreshing stuff
 update bikes set available = 1 where available = 0;
 delete from rentals;
 delete from customers;
 
---trying stuff if it even works as it should 
---at least directly in the db
+# trying stuff if it even works as it should 
+# at least directly in the db
 INSERT INTO rentals(customer_id, bike_id) VALUES(23, 22);
 UPDATE rentals SET date_returned = NULL WHERE rental_id = 10;
 
