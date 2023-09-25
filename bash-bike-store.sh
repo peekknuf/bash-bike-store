@@ -76,7 +76,7 @@ RENT_MENU() {
         fi
 
         # get customer_id
-        CUSTOMER_ID=$($mysql_command -e "SELECT customer_id FROM customers WHERE phone='$PHONE_NUMBER'")
+        CUSTOMER_ID=$($mysql_command -N -e "SELECT customer_id FROM customers WHERE phone='$PHONE_NUMBER'")
 
         # insert bike rental
         INSERT_RENTAL_RESULT=$($mysql_command -N -e "INSERT INTO rentals(customer_id, bike_id) VALUES($CUSTOMER_ID, $BIKE_ID_TO_RENT)") 
@@ -89,7 +89,7 @@ RENT_MENU() {
         FORMATTED_INFO=$(echo "$BIKE_INFO" | tail -n 1)
         
         # send to main menu
-        MAIN_MENU "I have put you down for the $FORMATTED_INFO Bike, $CUSTOMER_NAME"
+        MAIN_MENU "I have put you down for the $FORMATTED_INFO Bike, $CUSTOMER_NAME.\n"
       fi
     fi
   fi
@@ -100,7 +100,7 @@ RETURN_MENU() {
   echo -e "\nWhat's your phone number?"
   read PHONE_NUMBER
 
-  CUSTOMER_ID=$($mysql_command -N -e "SELECT customer_id FROM customers WHERE phone = '$PHONE_NUMBER'")
+  CUSTOMER_ID=$($mysql_command -e "SELECT customer_id FROM customers WHERE phone = '$PHONE_NUMBER'")
 
   # if not found
   if [[ -z $CUSTOMER_ID  ]]
@@ -113,7 +113,7 @@ RETURN_MENU() {
                                             FROM bikes b
                                             INNER JOIN rentals r ON b.bike_id = r.bike_id
                                             INNER JOIN customers c ON r.customer_id = c.customer_id
-                                            WHERE r.date_returned IS NULL")
+                                            WHERE c.phone = '$PHONE_NUMBER' AND r.date_returned IS NULL")
 
     # if no rentals
     if [[ -z $CUSTOMER_RENTALS  ]]
@@ -137,7 +137,7 @@ RETURN_MENU() {
         MAIN_MENU "That is not a valid bike number."
         else
         # check if input is rented
-        RENTAL_ID=$($mysql_command -e "SELECT r.rental_id
+        RENTAL_ID=$($mysql_command -N -e "SELECT r.rental_id
                                         FROM rentals r
                                         INNER JOIN customers c ON r.customer_id = c.customer_id
                                         WHERE r.bike_id = $BIKE_ID_TO_RETURN AND r.date_returned IS NULL")
@@ -153,7 +153,7 @@ RETURN_MENU() {
           # set bike availability to true
           SET_TO_TRUE_RESULT=$($mysql_command -e "UPDATE bikes SET available = 1 WHERE bike_id = $BIKE_ID_TO_RETURN")
           # send to main menu
-          MAIN_MENU "Thank you for returning your bike."
+          MAIN_MENU "Thank you for returning your bike.\n"
         fi
       fi
     fi
@@ -163,6 +163,5 @@ RETURN_MENU() {
 EXIT() {
   echo -e "\nThank you for stopping in.\n"
 }
-
 
 MAIN_MENU
